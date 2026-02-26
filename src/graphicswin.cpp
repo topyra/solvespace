@@ -178,7 +178,7 @@ const MenuEntry Menu[] = {
 { 1, NULL,                              Command::NONE,             0,       KN, NULL   },
 { 1, N_("Show &Underconstrained Points"), Command::SHOW_DOF,       C|S|'f', KN, mAna   },
 { 1, NULL,                              Command::NONE,             0,       KN, NULL   },
-{ 1, N_("&Trace Point"),                Command::TRACE_PT,         C|S|'t', KN, mAna   },
+{ 1, N_("&Trace Points / Normals"),     Command::TRACE_PT,         C|S|'t', KN, mAna   },
 { 1, N_("&Stop Tracing..."),            Command::STOP_TRACING,     C|S|'s', KN, mAna   },
 { 1, N_("Step &Dimension..."),          Command::STEP_DIM,         C|S|'d', KN, mAna   },
 

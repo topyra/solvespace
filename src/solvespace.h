@@ -632,6 +632,7 @@ public:
     struct {
         List<SContour>  paths;
         List<hEntity>   points;
+        List<hEntity>   normals;
     } traced;
     SEdgeList nakedEdges;
     struct {

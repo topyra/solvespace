@@ -1192,8 +1192,8 @@ msgid "Show &Underconstrained Points"
 msgstr "Kı&sıtlanmamış Noktaları Göster"
 
 #: graphicswin.cpp:179
-msgid "&Trace Point"
-msgstr "&İzlenecek Nokta"
+msgid "&Trace Points / Normals"
+msgstr "&İzlenecek Noktalar / Normaller"
 
 #: graphicswin.cpp:180
 msgid "&Stop Tracing..."

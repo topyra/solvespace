@@ -1153,8 +1153,8 @@ msgid "Show &Underconstrained Points"
 msgstr "显示欠约束的点(&U)"
 
 #: graphicswin.cpp:179
-msgid "&Trace Point"
-msgstr "跟踪点(&T)"
+msgid "&Trace Points / Normals"
+msgstr "跟踪点/法线(&T)"
 
 #: graphicswin.cpp:180
 msgid "&Stop Tracing..."

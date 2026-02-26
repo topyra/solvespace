@@ -1200,8 +1200,8 @@ msgid "Show &Underconstrained Points"
 msgstr "&Unterbeschränkte Punkte anzeigen"
 
 #: graphicswin.cpp:179
-msgid "&Trace Point"
-msgstr "Punkt nachzeichnen"
+msgid "&Trace Points / Normals"
+msgstr "Punkte / Normalen nachzeichnen"
 
 #: graphicswin.cpp:180
 msgid "&Stop Tracing..."

@@ -1164,8 +1164,8 @@ msgid "Show &Underconstrained Points"
 msgstr "拘束されていない点を強調表示 (&U)"
 
 #: graphicswin.cpp:179
-msgid "&Trace Point"
-msgstr "点の位置の記録を開始 (&T)"
+msgid "&Trace Points / Normals"
+msgstr "点と法線の位置の記録を開始 (&T)"
 
 #: graphicswin.cpp:180
 msgid "&Stop Tracing..."

@@ -1174,8 +1174,8 @@ msgid "Show &Underconstrained Points"
 msgstr "Zobrazit &nedostatečně omezené body"
 
 #: graphicswin.cpp:179
-msgid "&Trace Point"
-msgstr "&Trasovat bod"
+msgid "&Trace Points / Normals"
+msgstr "&Trasovat body / normály"
 
 #: graphicswin.cpp:180
 msgid "&Stop Tracing..."

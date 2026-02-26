@@ -1187,8 +1187,8 @@ msgid "Show &Underconstrained Points"
 msgstr "Показати &Надмірно Обмежені Точки"
 
 #: graphicswin.cpp:179
-msgid "&Trace Point"
-msgstr "&Трасувати Точку"
+msgid "&Trace Points / Normals"
+msgstr "&Трасувати Точки / Нормалі"
 
 #: graphicswin.cpp:180
 msgid "&Stop Tracing..."

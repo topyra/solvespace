@@ -525,8 +525,9 @@ double SolveSpaceUI::CameraTangent() {
 }
 
 void SolveSpaceUI::AfterNewFile() {
-// Clear out the traced points, which are no longer valid
+// Clear out the traced points/normals, which are no longer valid
 traced.points.Clear();
+traced.normals.Clear();
 for(SContour &sc : traced.paths) {
     sc.l.Clear();
 }
@@ -1020,7 +1021,8 @@ void SolveSpaceUI::MenuAnalyze(Command id) {
             break;
 
         case Command::TRACE_PT:
-            if(gs.points >= 1) {
+            if(gs.points >= 1 || gs.anyNormals >= 1) {
+                // Handle points
                 for(int i = 0; i < gs.points; i++) {
                     // Check if already tracing this point
                     bool found = false;
@@ -1034,14 +1036,31 @@ void SolveSpaceUI::MenuAnalyze(Command id) {
                         SS.traced.points.Add(&gs.point[i]);
                     }
                 }
+                // Handle normals
+                for(int i = 0; i < gs.anyNormals; i++) {
+                    Entity *e = SK.GetEntity(gs.anyNormal[i]);
+                    if(e->IsNormal()) {
+                        // Check if already tracing this normal
+                        bool found = false;
+                        for(hEntity &he : SS.traced.normals) {
+                            if(he.v == gs.anyNormal[i].v) {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if(!found) {
+                            SS.traced.normals.Add(&gs.anyNormal[i]);
+                        }
+                    }
+                }
                 SS.GW.ClearSelection();
             } else {
-                Error(_("Bad selection for trace; select one or more points."));
+                Error(_("Bad selection for trace; select one or more points or normals."));
             }
             break;
 
         case Command::STOP_TRACING: {
-            if (SS.traced.points.n == 0) {
+            if (SS.traced.points.n == 0 && SS.traced.normals.n == 0) {
                 break;
             }
             Platform::FileDialogRef dialog = Platform::CreateSaveFileDialog(SS.GW.window);
@@ -1053,35 +1072,69 @@ void SolveSpaceUI::MenuAnalyze(Command id) {
 
                 FILE *f = OpenFile(dialog->GetFilename(), "wb");
                 if(f) {
-                    // Find the maximum number of trace points recorded
+                    // Find the maximum number of trace samples recorded
                     int maxPts = 0;
                     for(SContour &sc : SS.traced.paths) {
                         maxPts = max(maxPts, sc.l.n);
                     }
                     
-                    // Write CSV header with point names
-                    for(int j = 0; j < SS.traced.paths.n; j++) {
-                        fprintf(f, "Point%d.x, Point%d.y, Point%d.z", j, j, j);
-                        if(j < SS.traced.paths.n - 1) {
+                    // Write CSV header with unified numbering for points and normals
+                    int entityIndex = 0;
+                    for(int j = 0; j < SS.traced.points.n; j++) {
+                        fprintf(f, "Point%d.x, Point%d.y, Point%d.z",
+                                entityIndex, entityIndex, entityIndex);
+                        if(j < SS.traced.points.n - 1 || SS.traced.normals.n > 0) {
                             fprintf(f, ", ");
                         }
+                        entityIndex++;
+                    }
+                    for(int j = 0; j < SS.traced.normals.n; j++) {
+                        fprintf(f, "Normal%d.origin.x, Normal%d.origin.y, Normal%d.origin.z, "
+                                   "Normal%d.quat.w, Normal%d.quat.x, Normal%d.quat.y, Normal%d.quat.z",
+                                entityIndex, entityIndex, entityIndex,
+                                entityIndex, entityIndex, entityIndex, entityIndex);
+                        if(j < SS.traced.normals.n - 1) {
+                            fprintf(f, ", ");
+                        }
+                        entityIndex++;
                     }
                     fprintf(f, "\r\n");
                     
-                    // Write CSV data rows with columns: x0,y0,z0,x1,y1,z1,...
+                    // Write CSV data rows
                     for(int i = 0; i < maxPts; i++) {
                         double s = SS.exportScale;
-                        for(int j = 0; j < SS.traced.paths.n; j++) {
+                        
+                        // Write point data
+                        for(int j = 0; j < SS.traced.points.n; j++) {
                             SContour *sc = &(SS.traced.paths[j]);
                             if(i < sc->l.n) {
                                 Vector p = sc->l[i].p;
                                 fprintf(f, "%.10f, %.10f, %.10f",
                                     p.x/s, p.y/s, p.z/s);
                             } else {
-                                // Empty cells for points that don't have this many samples
                                 fprintf(f, ", , ");
                             }
-                            if(j < SS.traced.paths.n - 1) {
+                            if(j < SS.traced.points.n - 1 || SS.traced.normals.n > 0) {
+                                fprintf(f, ", ");
+                            }
+                        }
+                        
+                        // Write normal data
+                        for(int j = 0; j < SS.traced.normals.n; j++) {
+                            int pathIndex = SS.traced.points.n + j;
+                            SContour *sc = &(SS.traced.paths[pathIndex]);
+                            if(i < sc->l.n) {
+                                Vector origin = sc->l[i].p;
+                                Entity *ne = SK.GetEntity(SS.traced.normals[j]);
+                                Quaternion q = ne->NormalGetNum();
+                                
+                                fprintf(f, "%.10f, %.10f, %.10f, %.10f, %.10f, %.10f, %.10f",
+                                    origin.x/s, origin.y/s, origin.z/s,
+                                    q.w, q.vx, q.vy, q.vz);
+                            } else {
+                                fprintf(f, ", , , , , , ");
+                            }
+                            if(j < SS.traced.normals.n - 1) {
                                 fprintf(f, ", ");
                             }
                         }
@@ -1094,6 +1147,7 @@ void SolveSpaceUI::MenuAnalyze(Command id) {
             }
             // Clear the trace, and stop tracing
             SS.traced.points.Clear();
+            SS.traced.normals.Clear();
             for(SContour &sc : SS.traced.paths) {
                 sc.l.Clear();
             }

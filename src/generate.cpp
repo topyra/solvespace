@@ -334,19 +334,48 @@ void SolveSpaceUI::GenerateAll(Generate type, bool andFindFree, bool genForBBox)
         traced.points.RemoveLast(1);
     }
     
-    // Ensure we have matching paths
-    while(traced.paths.n < traced.points.n) {
+    // Make sure the normals that we're tracing exist, and remove invalid ones.
+    validCount = 0;
+    for(int i = 0; i < traced.normals.n; i++) {
+        hEntity he = traced.normals[i];
+        if(SK.entity.FindByIdNoOops(he)) {
+            Entity *e = SK.GetEntity(he);
+            if(e->IsNormal()) {
+                if(validCount != i) {
+                    traced.normals[validCount] = he;
+                }
+                validCount++;
+            }
+        }
+    }
+    // Remove invalid normals from the end
+    while(traced.normals.n > validCount) {
+        traced.normals.RemoveLast(1);
+    }
+    
+    // Ensure we have matching paths for both points and normals
+    int totalTraced = traced.points.n + traced.normals.n;
+    while(traced.paths.n < totalTraced) {
         SContour sc = {};
         traced.paths.Add(&sc);
     }
-    while(traced.paths.n > traced.points.n) {
+    while(traced.paths.n > totalTraced) {
         traced.paths.Last()->l.Clear();
         traced.paths.RemoveLast(1);
     }
-    // And for each point we're tracing, add its new value to the corresponding path
+    
+    // For each point we're tracing, add its new value to the corresponding path
     for(int i = 0; i < traced.points.n; i++) {
         Entity *pt = SK.GetEntity(traced.points[i]);
         traced.paths[i].AddPoint(pt->PointGetNum());
+    }
+    
+    // For each normal we're tracing, add its origin position to the corresponding path
+    for(int i = 0; i < traced.normals.n; i++) {
+        Entity *ne = SK.GetEntity(traced.normals[i]);
+        // Normal entities have their origin at point[0]
+        Vector origin = SK.GetEntity(ne->point[0])->PointGetNum();
+        traced.paths[traced.points.n + i].AddPoint(origin);
     }
 
     prev.Clear();
