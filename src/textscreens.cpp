@@ -731,7 +731,7 @@ void TextWindow::ScreenStepDimGo(int link, uint32_t v) {
             if(SS.TW.stepDim.step <= SS.TW.stepDim.steps) {
                 c->valA = start + ((finish - start)*SS.TW.stepDim.step)/SS.TW.stepDim.steps;
                 SS.MarkGroupDirty(c->group);
-                SS.GenerateAll();
+                SS.GenerateAll(SolveSpaceUI::Generate::ALL);
                 if(!SS.ActiveGroupsOkay()) {
                     // Failed to solve, so quit
                     return;
