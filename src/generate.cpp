@@ -363,31 +363,32 @@ void SolveSpaceUI::GenerateAll(Generate type, bool andFindFree, bool genForBBox)
         traced.paths.Last()->l.Clear();
         traced.paths.RemoveLast(1);
     }
-    
-    // For each point we're tracing, add its new value to the corresponding path
-    for(int i = 0; i < traced.points.n; i++) {
-        Entity *pt = SK.GetEntity(traced.points[i]);    
-        traced.paths[i].AddPoint(pt->PointGetNum());
-    }
-    
-    // Ensure we have matching quaternion lists for normals
+
+    // Ensure normalQuats matches normals count
     while(traced.normalQuats.n < traced.normals.n) {
-        List<Quaternion> ql = {};
-        traced.normalQuats.Add(&ql);
+        List<Quaternion> lq = {};
+        traced.normalQuats.Add(&lq);
     }
     while(traced.normalQuats.n > traced.normals.n) {
         traced.normalQuats.Last()->Clear();
         traced.normalQuats.RemoveLast(1);
     }
+    
+    // For each point we're tracing, add its new value to the corresponding path
+    if(!genForBBox) {
+        for(int i = 0; i < traced.points.n; i++) {
+            Entity *pt = SK.GetEntity(traced.points[i]);    
+            traced.paths[i].AddPoint(pt->PointGetNum());
+        }
 
-    // For each normal we're tracing, add its origin position and quaternion
-    for(int i = 0; i < traced.normals.n; i++) {
-        Entity *ne = SK.GetEntity(traced.normals[i]);
-        // Normal entities have their origin at point[0]
-        Vector origin = SK.GetEntity(ne->point[0])->PointGetNum();
-        traced.paths[traced.points.n + i].AddPoint(origin);
-        Quaternion q = ne->NormalGetNum();
-        traced.normalQuats[i].Add(&q);
+        // For each normal we're tracing, add its origin position and quaternion
+        for(int i = 0; i < traced.normals.n; i++) {
+            Entity *ne = SK.GetEntity(traced.normals[i]);
+            Vector origin = SK.GetEntity(ne->point[0])->PointGetNum();
+            traced.paths[traced.points.n + i].AddPoint(origin);
+            Quaternion q = ne->NormalGetNum();
+            traced.normalQuats[i].Add(&q);
+        }
     }
 
     prev.Clear();

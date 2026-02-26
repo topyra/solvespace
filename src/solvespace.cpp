@@ -1054,6 +1054,8 @@ void SolveSpaceUI::MenuAnalyze(Command id) {
                         }
                         if(!found) {
                             SS.traced.normals.Add(&gs.anyNormal[i]);
+                            List<Quaternion> lq = {};
+                            SS.traced.normalQuats.Add(&lq);
                         }
                     }
                 }
