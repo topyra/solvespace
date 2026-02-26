@@ -532,6 +532,10 @@ for(SContour &sc : traced.paths) {
     sc.l.Clear();
 }
 traced.paths.Clear();
+for(auto &ql : traced.normalQuats) {
+    ql.Clear();
+}
+traced.normalQuats.Clear();
     // and the naked edges
     nakedEdges.Clear();
 
@@ -1123,10 +1127,9 @@ void SolveSpaceUI::MenuAnalyze(Command id) {
                         for(int j = 0; j < SS.traced.normals.n; j++) {
                             int pathIndex = SS.traced.points.n + j;
                             SContour *sc = &(SS.traced.paths[pathIndex]);
-                            if(i < sc->l.n) {
+                            if(i < sc->l.n && i < SS.traced.normalQuats[j].n) {
                                 Vector origin = sc->l[i].p;
-                                Entity *ne = SK.GetEntity(SS.traced.normals[j]);
-                                Quaternion q = ne->NormalGetNum();
+                                Quaternion q = SS.traced.normalQuats[j][i];
                                 
                                 fprintf(f, "%.10f, %.10f, %.10f, %.10f, %.10f, %.10f, %.10f",
                                     origin.x/s, origin.y/s, origin.z/s,
@@ -1152,6 +1155,10 @@ void SolveSpaceUI::MenuAnalyze(Command id) {
                 sc.l.Clear();
             }
             SS.traced.paths.Clear();
+            for(auto &ql : SS.traced.normalQuats) {
+                ql.Clear();
+            }
+            SS.traced.normalQuats.Clear();
             SS.GW.Invalidate();
             break;
         }
