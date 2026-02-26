@@ -302,6 +302,7 @@ public:
         hStyle      style;
 
         hConstraint constraint;
+        hConstraint constraint2;
 
         struct {
             int         times;
@@ -349,6 +350,8 @@ public:
         // For the step dimension screen
         STEP_DIM_FINISH       = 400,
         STEP_DIM_STEPS        = 401,
+        STEP_DIM_FINISH2      = 402,
+        STEP_DIM_STEPS2       = 403,
         // For the styles stuff
         STYLE_WIDTH           = 500,
         STYLE_TEXT_HEIGHT     = 501,
@@ -487,12 +490,20 @@ public:
         double  finish;
         int     steps;
 
+        bool    isDistance2;
+        double  finish2;
+        int     steps2;
+        bool    hasSecond;
+
         Platform::TimerRef timer;
         int64_t time;
         int     step;
+        int     step2;
     } stepDim;
     static void ScreenStepDimSteps(int link, uint32_t v);
     static void ScreenStepDimFinish(int link, uint32_t v);
+    static void ScreenStepDimSteps2(int link, uint32_t v);
+    static void ScreenStepDimFinish2(int link, uint32_t v);
     static void ScreenStepDimGo(int link, uint32_t v);
 
     static void ScreenChangeTangentArc(int link, uint32_t v);

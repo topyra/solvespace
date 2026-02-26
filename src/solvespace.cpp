@@ -869,37 +869,58 @@ void SolveSpaceUI::MenuAnalyze(Command id) {
     auto const &gs = SS.GW.gs;
 
     switch(id) {
-        case Command::STEP_DIM:
-            if(gs.constraints == 1 && gs.n == 0) {
+        case Command::STEP_DIM: {
+            auto isDistanceType = [](Constraint::Type type) {
+                return (type != Constraint::Type::ANGLE) &&
+                       (type != Constraint::Type::LENGTH_RATIO) &&
+                       (type != Constraint::Type::ARC_ARC_LEN_RATIO) &&
+                       (type != Constraint::Type::ARC_LINE_LEN_RATIO) &&
+                       (type != Constraint::Type::LENGTH_DIFFERENCE) &&
+                       (type != Constraint::Type::ARC_ARC_DIFFERENCE) &&
+                       (type != Constraint::Type::ARC_LINE_DIFFERENCE);
+            };
+            if((gs.constraints == 1 || gs.constraints == 2) && gs.n == 0) {
                 Constraint *c = SK.GetConstraint(gs.constraint[0]);
-                if(c->HasLabel() && !c->reference) {
-                    SS.TW.stepDim.finish = c->valA;
-                    SS.TW.stepDim.steps = 10;
-                    SS.TW.stepDim.isDistance =
-                        (c->type != Constraint::Type::ANGLE) &&
-                        (c->type != Constraint::Type::LENGTH_RATIO) &&
-                        (c->type != Constraint::Type::ARC_ARC_LEN_RATIO) &&
-                        (c->type != Constraint::Type::ARC_LINE_LEN_RATIO) &&
-                        (c->type != Constraint::Type::LENGTH_DIFFERENCE) &&
-                        (c->type != Constraint::Type::ARC_ARC_DIFFERENCE) &&
-                        (c->type != Constraint::Type::ARC_LINE_DIFFERENCE) ;
-                    SS.TW.shown.constraint = c->h;
-                    SS.TW.shown.screen = TextWindow::Screen::STEP_DIMENSION;
-
-                    // The step params are specified in the text window,
-                    // so force that to be shown.
-                    SS.GW.ForceTextWindowShown();
-
-                    SS.ScheduleShowTW();
-                    SS.GW.ClearSelection();
-                } else {
+                if(!(c->HasLabel() && !c->reference)) {
                     Error(_("Constraint must have a label, and must not be "
                             "a reference dimension."));
+                    break;
                 }
+                SS.TW.stepDim.finish = c->valA;
+                SS.TW.stepDim.steps = 10;
+                SS.TW.stepDim.isDistance = isDistanceType(c->type);
+                SS.TW.shown.constraint = c->h;
+
+                if(gs.constraints == 2) {
+                    Constraint *c2 = SK.GetConstraint(gs.constraint[1]);
+                    if(!(c2->HasLabel() && !c2->reference)) {
+                        Error(_("Constraint must have a label, and must not be "
+                                "a reference dimension."));
+                        break;
+                    }
+                    SS.TW.stepDim.finish2 = c2->valA;
+                    SS.TW.stepDim.steps2 = 10;
+                    SS.TW.stepDim.isDistance2 = isDistanceType(c2->type);
+                    SS.TW.shown.constraint2 = c2->h;
+                    SS.TW.stepDim.hasSecond = true;
+                } else {
+                    SS.TW.shown.constraint2 = {};
+                    SS.TW.stepDim.hasSecond = false;
+                }
+
+                SS.TW.shown.screen = TextWindow::Screen::STEP_DIMENSION;
+
+                // The step params are specified in the text window,
+                // so force that to be shown.
+                SS.GW.ForceTextWindowShown();
+
+                SS.ScheduleShowTW();
+                SS.GW.ClearSelection();
             } else {
-                Error(_("Bad selection for step dimension; select a constraint."));
+                Error(_("Bad selection for step dimension; select one or two constraints."));
             }
             break;
+        }
 
         case Command::NAKED_EDGES: {
             ShowNakedEdges(/*reportOnlyWhenNotOkay=*/false);
