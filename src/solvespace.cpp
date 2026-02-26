@@ -1059,7 +1059,16 @@ void SolveSpaceUI::MenuAnalyze(Command id) {
                         maxPts = max(maxPts, sc.l.n);
                     }
                     
-                    // Write CSV with columns: x0,y0,z0,x1,y1,z1,...
+                    // Write CSV header with point names
+                    for(int j = 0; j < SS.traced.paths.n; j++) {
+                        fprintf(f, "Point%d.x, Point%d.y, Point%d.z", j, j, j);
+                        if(j < SS.traced.paths.n - 1) {
+                            fprintf(f, ", ");
+                        }
+                    }
+                    fprintf(f, "\r\n");
+                    
+                    // Write CSV data rows with columns: x0,y0,z0,x1,y1,z1,...
                     for(int i = 0; i < maxPts; i++) {
                         double s = SS.exportScale;
                         for(int j = 0; j < SS.traced.paths.n; j++) {
