@@ -630,8 +630,8 @@ public:
 
     // Additional display stuff
     struct {
-        SContour    path;
-        hEntity     point;
+        List<SContour>  paths;
+        List<hEntity>   points;
     } traced;
     SEdgeList nakedEdges;
     struct {

@@ -318,14 +318,35 @@ void SolveSpaceUI::GenerateAll(Generate type, bool andFindFree, bool genForBBox)
         }
     }
 
-    // Make sure the point that we're tracing exists.
-    if(traced.point.v && !SK.entity.FindByIdNoOops(traced.point)) {
-        traced.point = Entity::NO_ENTITY;
+    // Make sure the points that we're tracing exist, and remove invalid ones.
+    int validCount = 0;
+    for(int i = 0; i < traced.points.n; i++) {
+        hEntity he = traced.points[i];
+        if(SK.entity.FindByIdNoOops(he)) {
+            if(validCount != i) {
+                traced.points[validCount] = he;
+            }
+            validCount++;
+        }
     }
-    // And if we're tracing a point, add its new value to the path
-    if(traced.point.v) {
-        Entity *pt = SK.GetEntity(traced.point);
-        traced.path.AddPoint(pt->PointGetNum());
+    // Remove invalid points from the end
+    while(traced.points.n > validCount) {
+        traced.points.RemoveLast(1);
+    }
+    
+    // Ensure we have matching paths
+    while(traced.paths.n < traced.points.n) {
+        SContour sc = {};
+        traced.paths.Add(&sc);
+    }
+    while(traced.paths.n > traced.points.n) {
+        traced.paths.Last()->l.Clear();
+        traced.paths.RemoveLast(1);
+    }
+    // And for each point we're tracing, add its new value to the corresponding path
+    for(int i = 0; i < traced.points.n; i++) {
+        Entity *pt = SK.GetEntity(traced.points[i]);
+        traced.paths[i].AddPoint(pt->PointGetNum());
     }
 
     prev.Clear();

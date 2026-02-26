@@ -525,9 +525,12 @@ double SolveSpaceUI::CameraTangent() {
 }
 
 void SolveSpaceUI::AfterNewFile() {
-    // Clear out the traced point, which is no longer valid
-    traced.point = Entity::NO_ENTITY;
-    traced.path.l.Clear();
+// Clear out the traced points, which are no longer valid
+traced.points.Clear();
+for(SContour &sc : traced.paths) {
+    sc.l.Clear();
+}
+traced.paths.Clear();
     // and the naked edges
     nakedEdges.Clear();
 
@@ -1017,16 +1020,28 @@ void SolveSpaceUI::MenuAnalyze(Command id) {
             break;
 
         case Command::TRACE_PT:
-            if(gs.points == 1 && gs.n == 1) {
-                SS.traced.point = gs.point[0];
+            if(gs.points >= 1) {
+                for(int i = 0; i < gs.points; i++) {
+                    // Check if already tracing this point
+                    bool found = false;
+                    for(hEntity &he : SS.traced.points) {
+                        if(he.v == gs.point[i].v) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if(!found) {
+                        SS.traced.points.Add(&gs.point[i]);
+                    }
+                }
                 SS.GW.ClearSelection();
             } else {
-                Error(_("Bad selection for trace; select a single point."));
+                Error(_("Bad selection for trace; select one or more points."));
             }
             break;
 
         case Command::STOP_TRACING: {
-            if (SS.traced.point == Entity::NO_ENTITY) {
+            if (SS.traced.points.n == 0) {
                 break;
             }
             Platform::FileDialogRef dialog = Platform::CreateSaveFileDialog(SS.GW.window);
@@ -1038,13 +1053,30 @@ void SolveSpaceUI::MenuAnalyze(Command id) {
 
                 FILE *f = OpenFile(dialog->GetFilename(), "wb");
                 if(f) {
-                    int i;
-                    SContour *sc = &(SS.traced.path);
-                    for(i = 0; i < sc->l.n; i++) {
-                        Vector p = sc->l[i].p;
+                    // Find the maximum number of trace points recorded
+                    int maxPts = 0;
+                    for(SContour &sc : SS.traced.paths) {
+                        maxPts = max(maxPts, sc.l.n);
+                    }
+                    
+                    // Write CSV with columns: x0,y0,z0,x1,y1,z1,...
+                    for(int i = 0; i < maxPts; i++) {
                         double s = SS.exportScale;
-                        fprintf(f, "%.10f, %.10f, %.10f\r\n",
-                            p.x/s, p.y/s, p.z/s);
+                        for(int j = 0; j < SS.traced.paths.n; j++) {
+                            SContour *sc = &(SS.traced.paths[j]);
+                            if(i < sc->l.n) {
+                                Vector p = sc->l[i].p;
+                                fprintf(f, "%.10f, %.10f, %.10f",
+                                    p.x/s, p.y/s, p.z/s);
+                            } else {
+                                // Empty cells for points that don't have this many samples
+                                fprintf(f, ", , ");
+                            }
+                            if(j < SS.traced.paths.n - 1) {
+                                fprintf(f, ", ");
+                            }
+                        }
+                        fprintf(f, "\r\n");
                     }
                     fclose(f);
                 } else {
@@ -1052,8 +1084,11 @@ void SolveSpaceUI::MenuAnalyze(Command id) {
                 }
             }
             // Clear the trace, and stop tracing
-            SS.traced.point = Entity::NO_ENTITY;
-            SS.traced.path.l.Clear();
+            SS.traced.points.Clear();
+            for(SContour &sc : SS.traced.paths) {
+                sc.l.Clear();
+            }
+            SS.traced.paths.Clear();
             SS.GW.Invalidate();
             break;
         }

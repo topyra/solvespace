@@ -779,9 +779,11 @@ void GraphicsWindow::Draw(Canvas *canvas) {
     strokeAnalyze.layer = Canvas::Layer::FRONT;
     Canvas::hStroke hcsAnalyze = canvas->GetStroke(strokeAnalyze);
 
-    // Draw the traced path, if one exists
+    // Draw the traced paths, if any exist
     SEdgeList tracedEdges = {};
-    SS.traced.path.MakeEdgesInto(&tracedEdges);
+    for(SContour &sc : SS.traced.paths) {
+        sc.MakeEdgesInto(&tracedEdges);
+    }
     canvas->DrawEdges(tracedEdges, hcsAnalyze);
     tracedEdges.Clear();
 
