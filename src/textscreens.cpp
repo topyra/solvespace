@@ -700,6 +700,16 @@ void TextWindow::ShowGroupSolveInfo() {
 // how many steps to take in between current and finish, re-solving each
 // time. Supports up to two constraints (nested loops).
 //-----------------------------------------------------------------------------
+void TextWindow::ScreenStepDimStart(int link, uint32_t v) {
+    SS.TW.edit.meaning = Edit::STEP_DIM_START;
+    std::string edit_value;
+    if(SS.TW.stepDim.isDistance) {
+        edit_value = SS.MmToString(SS.TW.stepDim.start, true);
+    } else {
+        edit_value = ssprintf("%.3f", SS.TW.stepDim.start);
+    }
+    SS.TW.ShowEditControl(12, edit_value);
+}
 void TextWindow::ScreenStepDimFinish(int link, uint32_t v) {
     SS.TW.edit.meaning = Edit::STEP_DIM_FINISH;
     std::string edit_value;
@@ -713,6 +723,16 @@ void TextWindow::ScreenStepDimFinish(int link, uint32_t v) {
 void TextWindow::ScreenStepDimSteps(int link, uint32_t v) {
     SS.TW.edit.meaning = Edit::STEP_DIM_STEPS;
     SS.TW.ShowEditControl(12, ssprintf("%d", SS.TW.stepDim.steps));
+}
+void TextWindow::ScreenStepDimStart2(int link, uint32_t v) {
+    SS.TW.edit.meaning = Edit::STEP_DIM_START2;
+    std::string edit_value;
+    if(SS.TW.stepDim.isDistance2) {
+        edit_value = SS.MmToString(SS.TW.stepDim.start2, true);
+    } else {
+        edit_value = ssprintf("%.3f", SS.TW.stepDim.start2);
+    }
+    SS.TW.ShowEditControl(12, edit_value);
 }
 void TextWindow::ScreenStepDimFinish2(int link, uint32_t v) {
     SS.TW.edit.meaning = Edit::STEP_DIM_FINISH2;
@@ -739,15 +759,15 @@ void TextWindow::ScreenStepDimGo(int link, uint32_t v) {
 
     SS.UndoRemember();
 
-    double start = c->valA, finish = SS.TW.stepDim.finish;
+    double start = SS.TW.stepDim.start, finish = SS.TW.stepDim.finish;
     double start2 = 0, finish2 = 0;
     if(c2) {
-        start2 = c2->valA;
+        start2 = SS.TW.stepDim.start2;
         finish2 = SS.TW.stepDim.finish2;
     }
     SS.TW.stepDim.time = GetMilliseconds();
-    SS.TW.stepDim.step = 1;
-    SS.TW.stepDim.step2 = 1;
+    SS.TW.stepDim.step = 0;
+    SS.TW.stepDim.step2 = 0;
 
     int steps1 = SS.TW.stepDim.steps;
     int steps2 = c2 ? SS.TW.stepDim.steps2 : 1;
@@ -758,12 +778,13 @@ void TextWindow::ScreenStepDimGo(int link, uint32_t v) {
     SS.TW.stepDim.timer->onTimeout = [=] {
         // With two constraints, the outer loop is constraint2 and the
         // inner loop is constraint1. Both step and step2 go from
-        // 1..stepsN; inner completes a full sweep for each outer value.
+        // 0..(stepsN-1); inner completes a full sweep for each outer
+        // value. The start and finish values are both included.
         int curStep1 = SS.TW.stepDim.step;
         int curStep2 = SS.TW.stepDim.step2;
 
         // Check if we're done
-        if(curStep2 > steps2) {
+        if(curStep2 >= steps2) {
             SS.TW.GoToScreen(Screen::LIST_OF_GROUPS);
             SS.ScheduleShowTW();
             SS.GW.Invalidate();
@@ -772,13 +793,17 @@ void TextWindow::ScreenStepDimGo(int link, uint32_t v) {
 
         // Set the outer constraint value if we have two constraints
         if(c2) {
-            c2->valA = start2 + ((finish2 - start2) * curStep2) / steps2;
+            c2->valA = start2 + ((finish2 - start2) * curStep2) / max(1, steps2 - 1);
             SS.MarkGroupDirty(c2->group);
         }
 
         // Set the inner constraint value
-        c->valA = start + ((finish - start) * curStep1) / steps1;
+        c->valA = start + ((finish - start) * curStep1) / max(1, steps1 - 1);
         SS.MarkGroupDirty(c->group);
+
+        // MarkGroupDirty schedules a GenerateAll via the refresh timer; cancel
+        // that so the explicit call below is the only one that appends a trace point.
+        SS.scheduledGenerateAll = false;
 
         SS.GenerateAll(SolveSpaceUI::Generate::ALL);
         if(!SS.ActiveGroupsOkay()) {
@@ -788,8 +813,8 @@ void TextWindow::ScreenStepDimGo(int link, uint32_t v) {
 
         // Advance: inner loop first, then outer
         SS.TW.stepDim.step++;
-        if(SS.TW.stepDim.step > steps1) {
-            SS.TW.stepDim.step = 1;
+        if(SS.TW.stepDim.step >= steps1) {
+            SS.TW.stepDim.step = 0;
             SS.TW.stepDim.step2++;
         }
 
@@ -817,11 +842,13 @@ void TextWindow::ShowStepDimension() {
     Printf(true, "%FtSTEP DIMENSION (inner)%E %s", c->DescriptionString().c_str());
 
     if(stepDim.isDistance) {
-        Printf(true,  "%Ba   %Ftstart%E    %s", SS.MmToString(c->valA).c_str());
+        Printf(true,  "%Ba   %Ftstart%E    %s %Fl%Ll%f[change]%E",
+            SS.MmToString(stepDim.start).c_str(), &ScreenStepDimStart);
         Printf(false, "%Bd   %Ftfinish%E   %s %Fl%Ll%f[change]%E",
             SS.MmToString(stepDim.finish).c_str(), &ScreenStepDimFinish);
     } else {
-        Printf(true,  "%Ba   %Ftstart%E    %@", c->valA);
+        Printf(true,  "%Ba   %Ftstart%E    %@ %Fl%Ll%f[change]%E",
+            stepDim.start, &ScreenStepDimStart);
         Printf(false, "%Bd   %Ftfinish%E   %@ %Fl%Ll%f[change]%E",
             stepDim.finish, &ScreenStepDimFinish);
     }
@@ -834,11 +861,13 @@ void TextWindow::ShowStepDimension() {
             Printf(true, "%FtSTEP DIMENSION (outer)%E %s", c2->DescriptionString().c_str());
 
             if(stepDim.isDistance2) {
-                Printf(true,  "%Ba   %Ftstart%E    %s", SS.MmToString(c2->valA).c_str());
+                Printf(true,  "%Ba   %Ftstart%E    %s %Fl%Ll%f[change]%E",
+                    SS.MmToString(stepDim.start2).c_str(), &ScreenStepDimStart2);
                 Printf(false, "%Bd   %Ftfinish%E   %s %Fl%Ll%f[change]%E",
                     SS.MmToString(stepDim.finish2).c_str(), &ScreenStepDimFinish2);
             } else {
-                Printf(true,  "%Ba   %Ftstart%E    %@", c2->valA);
+                Printf(true,  "%Ba   %Ftstart%E    %@ %Fl%Ll%f[change]%E",
+                    stepDim.start2, &ScreenStepDimStart2);
                 Printf(false, "%Bd   %Ftfinish%E   %@ %Fl%Ll%f[change]%E",
                     stepDim.finish2, &ScreenStepDimFinish2);
             }
@@ -1008,6 +1037,16 @@ void TextWindow::EditControlDone(std::string s) {
             }
             break;
 
+        case Edit::STEP_DIM_START:
+            if(Expr *e = Expr::From(s, /*popUpError=*/true)) {
+                if(stepDim.isDistance) {
+                    stepDim.start = SS.ExprToMm(e);
+                } else {
+                    stepDim.start = e->Eval();
+                }
+            }
+            break;
+
         case Edit::STEP_DIM_FINISH:
             if(Expr *e = Expr::From(s, /*popUpError=*/true)) {
                 if(stepDim.isDistance) {
@@ -1020,6 +1059,16 @@ void TextWindow::EditControlDone(std::string s) {
 
         case Edit::STEP_DIM_STEPS:
             stepDim.steps = min(300, max(1, atoi(s.c_str())));
+            break;
+
+        case Edit::STEP_DIM_START2:
+            if(Expr *e = Expr::From(s, /*popUpError=*/true)) {
+                if(stepDim.isDistance2) {
+                    stepDim.start2 = SS.ExprToMm(e);
+                } else {
+                    stepDim.start2 = e->Eval();
+                }
+            }
             break;
 
         case Edit::STEP_DIM_FINISH2:

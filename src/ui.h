@@ -348,10 +348,12 @@ public:
         // For TTF text
         TTF_TEXT              = 300,
         // For the step dimension screen
-        STEP_DIM_FINISH       = 400,
-        STEP_DIM_STEPS        = 401,
-        STEP_DIM_FINISH2      = 402,
-        STEP_DIM_STEPS2       = 403,
+        STEP_DIM_START        = 400,
+        STEP_DIM_FINISH       = 401,
+        STEP_DIM_STEPS        = 402,
+        STEP_DIM_START2       = 403,
+        STEP_DIM_FINISH2      = 404,
+        STEP_DIM_STEPS2       = 405,
         // For the styles stuff
         STYLE_WIDTH           = 500,
         STYLE_TEXT_HEIGHT     = 501,
@@ -487,10 +489,12 @@ public:
 
     struct {
         bool    isDistance;
+        double  start;
         double  finish;
         int     steps;
 
         bool    isDistance2;
+        double  start2;
         double  finish2;
         int     steps2;
         bool    hasSecond;
@@ -500,8 +504,10 @@ public:
         int     step;
         int     step2;
     } stepDim;
-    static void ScreenStepDimSteps(int link, uint32_t v);
+    static void ScreenStepDimStart(int link, uint32_t v);
     static void ScreenStepDimFinish(int link, uint32_t v);
+    static void ScreenStepDimSteps(int link, uint32_t v);
+    static void ScreenStepDimStart2(int link, uint32_t v);
     static void ScreenStepDimSteps2(int link, uint32_t v);
     static void ScreenStepDimFinish2(int link, uint32_t v);
     static void ScreenStepDimGo(int link, uint32_t v);

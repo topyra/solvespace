@@ -558,7 +558,7 @@ traced.normalQuats.Clear();
 
     unsaved = false;
 
-    GW.ZoomToFit();
+ //   GW.ZoomToFit();
 
     // Create all the default styles; they'll get created on the fly anyways,
     // but can't hurt to do it now.
@@ -886,6 +886,7 @@ void SolveSpaceUI::MenuAnalyze(Command id) {
                             "a reference dimension."));
                     break;
                 }
+                SS.TW.stepDim.start = c->valA;
                 SS.TW.stepDim.finish = c->valA;
                 SS.TW.stepDim.steps = 10;
                 SS.TW.stepDim.isDistance = isDistanceType(c->type);
@@ -898,6 +899,7 @@ void SolveSpaceUI::MenuAnalyze(Command id) {
                                 "a reference dimension."));
                         break;
                     }
+                    SS.TW.stepDim.start2 = c2->valA;
                     SS.TW.stepDim.finish2 = c2->valA;
                     SS.TW.stepDim.steps2 = 10;
                     SS.TW.stepDim.isDistance2 = isDistanceType(c2->type);
